@@ -1,0 +1,23 @@
+{
+  "name": "tammy-contract-budget-inspector-deploy",
+  "version": "0.1.6",
+  "private": false,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "diff": "^9.0.0",
+    "jszip": "^3.10.1",
+    "pdfjs-dist": "^6.3.289",
+    "posthog-js": "^1.430.3"
+  },
+  "devDependencies": {
+    "vite": "^8.2.2"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}
