@@ -1,0 +1,74 @@
+name: Snapshot standardized Tammy Builds public tools
+
+on:
+  push:
+    paths:
+      - '.github/workflows/snapshot-public-tools.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  snapshot:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download standardized public builds
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf sql-blast-radius cobol-xray vendor-price-creep-finder
+          mkdir -p sql-blast-radius cobol-xray vendor-price-creep-finder
+
+          curl -fsSL https://sql-blast-radius.netlify.app/ -o sql-blast-radius/index.html
+          curl -fsSL https://cobol-xray.netlify.app/ -o cobol-xray/index.html
+          curl -fsSL https://vendor-price-creep-finder.netlify.app/ -o vendor-price-creep-finder/index.html
+
+          python - <<'PY'
+          import re, urllib.request
+          from pathlib import Path
+          base='https://vendor-price-creep-finder.netlify.app'
+          out=Path('vendor-price-creep-finder')
+          text=(out/'index.html').read_text(encoding='utf-8')
+          assets=sorted(set(re.findall(r'(/assets/[^\"\'\s>]+\.(?:js|css))',text)))
+          for path in assets:
+              target=out/path.lstrip('/')
+              target.parent.mkdir(parents=True,exist_ok=True)
+              with urllib.request.urlopen(base+path,timeout=30) as r:
+                  target.write_bytes(r.read())
+          for path in ('/favicon.svg','/social-card.png'):
+              try:
+                  with urllib.request.urlopen(base+path,timeout=30) as r:
+                      (out/path.lstrip('/')).write_bytes(r.read())
+              except Exception:
+                  pass
+          print('Vendor assets:',assets)
+          PY
+
+      - name: Safety checks
+        shell: bash
+        run: |
+          set -euo pipefail
+          if grep -RniE 'actorbridge|actoros' sql-blast-radius cobol-xray vendor-price-creep-finder; then
+            echo 'Blocked: private ActorBridge reference found.' >&2
+            exit 1
+          fi
+          for dir in sql-blast-radius cobol-xray vendor-price-creep-finder; do
+            grep -q 'tammy-builds-feedback' "$dir/index.html"
+            grep -q 'bot-field' "$dir/index.html"
+          done
+
+      - name: Commit public-safe snapshots
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'Tammy Builds Automation'
+          git config user.email 'rasha12273@gmail.com'
+          git add sql-blast-radius cobol-xray vendor-price-creep-finder
+          if git diff --cached --quiet; then
+            echo 'No snapshot changes to commit.'
+          else
+            git commit -m 'Add standardized public Tammy Builds tool snapshots'
+            git push
+          fi
