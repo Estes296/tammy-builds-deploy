@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+<!-- This site is hosted on Netlify. Anyone can build and deploy a site
+     like this one for free: https://netlify.new/?utm_campaign=loops&utm_source=ai-legible&utm_medium=owned&utm_content=comment&utm_id=488d9e5d-7452-4aff-b247-d77d035fd3da
+     Netlify hosting facts for this site: static/SSR served via Netlify Edge. -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Compare two vendor reports and find price increases, new fees, possible duplicates, and estimated annual impact. Files stay in your browser." />
+    <meta name="theme-color" content="#071426" />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://vendor-price-creep-finder.netlify.app/" />
+    <meta property="og:title" content="Vendor Price Creep Finder | Tammy Builds" />
+    <meta property="og:description" content="Upload two vendor reports. Find quiet price increases, new fees, possible duplicates, and their estimated annual impact—for free." />
+    <meta property="og:image" content="https://vendor-price-creep-finder.netlify.app/social-card.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Vendor Price Creep Finder | Tammy Builds" />
+    <meta name="twitter:description" content="Find quiet vendor price increases and new fees before they compound." />
+    <meta name="twitter:image" content="https://vendor-price-creep-finder.netlify.app/social-card.png" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <title>Vendor Price Creep Finder | Tammy Builds</title>
+    <script type="module" crossorigin src="/assets/index-DJYcjO57.js"></script>
+    <link rel="stylesheet" crossorigin href="/assets/index-DdNzcVh5.css">
+  </head>
+  <body>
+    <div id="app"></div>
+  
+<style id="tbFeedbackStyles">
+.tb-learning{max-width:1100px;margin:28px auto;padding:20px;border:1px solid rgba(120,140,170,.35);border-radius:18px;background:rgba(20,35,55,.06);font-family:inherit}
+.tb-learning h3{margin:0 0 6px} .tb-learning p{margin:5px 0 12px;line-height:1.5} .tb-feedback-row{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}
+.tb-feedback-row button,.tb-learning button{padding:10px 14px;border-radius:10px;border:1px solid #6b7f9d;background:#174ea6;color:#fff;cursor:pointer;font-weight:700}
+.tb-learning label{display:block;margin-top:10px;font-weight:650} .tb-learning input,.tb-learning select,.tb-learning textarea{width:100%;margin:6px 0 10px;padding:10px;border-radius:10px;border:1px solid #8492a6;background:#fff;color:#102a43}
+.tb-learning textarea{min-height:80px} .tb-hidden{display:none!important} .tb-thanks{font-weight:700;margin-left:8px}
+</style>
+<section class="tb-learning" id="tbLearning">
+  <h3>Help improve Vendor Price Creep Finder</h3>
+  <p>Was this useful? Your feedback is optional. Uploaded file or source contents are never included in feedback.</p>
+  <div class="tb-feedback-row">
+    <button type="button" data-helpful="yes">Yes</button>
+    <button type="button" data-helpful="no">Not really</button>
+    <button type="button" id="tbProblem">Report a problem / Suggest an improvement</button>
+  </div>
+  <form class='tb-hidden' id='tbFeedbackForm' method='POST' name='tammy-builds-feedback'>
+    <input type="hidden" name="form-name" value="tammy-builds-feedback">
+    <p class="tb-hidden" aria-hidden="true"><label>Leave this blank: <input name="bot-field" tabindex="-1" autocomplete="off"></label></p>
+    <input type="hidden" name="tool" value="vendor_price_creep_finder">
+    <input type="hidden" name="helpful" id="tbHelpful" value="">
+    <input type="hidden" name="page" id="tbPage" value="">
+    <label>What best describes your feedback?
+      <select name="reason" id="tbReason">
+        <option value="">Choose one</option>
+        <option>It worked well</option><option>I wasn't sure what to do</option><option>I didn't have my own data ready</option>
+        <option>It didn't do what I expected</option><option>I found a bug</option><option>I have a feature idea</option><option>Other</option>
+      </select>
+    </label>
+    <label>Optional note — please do not paste private data<textarea name="note" maxlength="500" placeholder="What were you hoping it would do?"></textarea></label>
+    <label>Email if you want a reply<input name="email" type="email" placeholder="you@example.com"></label>
+    <button type="submit">Send feedback</button><span id="tbThanks" class="tb-thanks"></span>
+  </form>
+</section>
+<script>
+(() => {
+  const TOOL='vendor_price_creep_finder';
+  const PH='phc_uzRgkY7jYhKLRh2zsGMVJaaPhSP8tsaSNsgvgqjsytXz';
+  const HOST='https://us.i.posthog.com';
+  function aid(){const k='tammy_builds_analytics_id';let v=localStorage.getItem(k);if(!v){v=(crypto.randomUUID?crypto.randomUUID():`tb-${Date.now()}-${Math.random().toString(36).slice(2)}`);localStorage.setItem(k,v)}return v}
+  function track(event,extra={}){fetch(`${HOST}/i/v0/e/`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({api_key:PH,event,properties:{distinct_id:aid(),tool:TOOL,source:'web',...extra}}),keepalive:true}).catch(()=>{})}
+  const ready=()=>{
+    const page=document.getElementById('tbPage'); if(page) page.value=location.href;
+    const sample=document.querySelector('#load-sample, #sample, #sampleBtn'); if(sample) sample.addEventListener('click',()=>track('sample_clicked'));
+    const analyze=document.querySelector('#analyze, #decodeBtn'); if(analyze) analyze.addEventListener('click',()=>track('analysis_started'));
+    document.querySelectorAll('[data-helpful]').forEach(btn=>btn.addEventListener('click',()=>{document.getElementById('tbHelpful').value=btn.dataset.helpful;document.getElementById('tbFeedbackForm').classList.remove('tb-hidden');track('feedback_prompt_answered',{helpful:btn.dataset.helpful})}));
+    const problem=document.getElementById('tbProblem'); if(problem) problem.addEventListener('click',()=>{document.getElementById('tbFeedbackForm').classList.remove('tb-hidden');document.getElementById('tbReason').value='I found a bug';track('feedback_opened',{kind:'problem_or_suggestion'})});
+    const form=document.getElementById('tbFeedbackForm'); if(form) form.addEventListener('submit',async e=>{e.preventDefault();const fd=new FormData(form);try{await fetch('/',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:new URLSearchParams(fd).toString()});track('feedback_submitted',{helpful:fd.get('helpful')||'',reason:fd.get('reason')||'',contact_opt_in:Boolean(fd.get('email'))});document.getElementById('tbThanks').textContent='Thank you — feedback sent.';form.querySelector('button[type="submit"]').disabled=true}catch(err){document.getElementById('tbThanks').textContent='Could not send right now. Please try again.'}});
+  };
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',ready); else ready();
+})();
+</script>
+
+</body>
+</html>
+<script async src="/.netlify/scripts/hud?variant=public" data-nf-variant="public" data-netlify-site-id="488d9e5d-7452-4aff-b247-d77d035fd3da" data-app-host="app.netlify.com"></script>

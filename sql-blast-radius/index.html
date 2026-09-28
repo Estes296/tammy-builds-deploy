@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<!-- This site is hosted on Netlify. Anyone can build and deploy a site
+     like this one for free: https://netlify.new/?utm_campaign=loops&utm_source=ai-legible&utm_medium=owned&utm_content=comment&utm_id=e3a2d01a-3356-461a-8e8b-b568db9f6058
+     Netlify hosting facts for this site: static/SSR served via Netlify Edge. -->
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>SQL Blast Radius — Know what breaks before you break it</title>
+<meta name="description" content="Analyze SQL Server/T-SQL scripts locally in your browser to find references, dependencies, and likely change impact." />
+<style>
+:root{
+  --bg:#07101f; --panel:#0d1830; --panel2:#111f3d; --ink:#edf4ff; --muted:#9db0cf;
+  --line:#233659; --cyan:#38d9ff; --orange:#ffb13b; --red:#ff5a6b; --green:#50e3a4;
+  --purple:#a986ff; --yellow:#ffd166;
+}
+*{box-sizing:border-box} body{margin:0;font-family:Inter,ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;background:
+radial-gradient(circle at 8% 0%,#152856 0,transparent 26%),radial-gradient(circle at 92% 8%,#4c1931 0,transparent 23%),var(--bg);color:var(--ink)}
+header{max-width:1280px;margin:0 auto;padding:38px 24px 22px;display:flex;justify-content:space-between;gap:24px;align-items:flex-start}
+.brand h1{margin:0;font-size:clamp(34px,5vw,64px);letter-spacing:-.045em;line-height:.95}.brand h1 span{color:var(--orange)}
+.brand p{margin:14px 0 0;color:var(--muted);font-size:18px}.badge{display:inline-flex;align-items:center;gap:8px;border:1px solid #35527d;background:#0c1730d9;border-radius:999px;padding:9px 13px;color:#cce7ff;font-size:13px;font-weight:700}
+main{max-width:1280px;margin:0 auto;padding:0 24px 72px}.grid{display:grid;grid-template-columns:1.05fr .95fr;gap:18px}@media(max-width:900px){.grid{grid-template-columns:1fr}header{flex-direction:column}}
+.card{background:linear-gradient(180deg,#101d39f2,#0b152bf5);border:1px solid var(--line);border-radius:22px;box-shadow:0 20px 60px #0007;padding:20px}.card h2{margin:0 0 8px;font-size:20px}.help{color:var(--muted);font-size:14px;line-height:1.5}
+.drop{border:1.5px dashed #3e5b8a;border-radius:18px;padding:26px;text-align:center;background:#0a1429;transition:.2s}.drop.drag{border-color:var(--cyan);background:#0c2038}.drop strong{display:block;font-size:17px;margin-bottom:5px}
+input[type=file]{display:none}.btnrow{display:flex;flex-wrap:wrap;gap:10px;margin-top:14px}.btn{appearance:none;border:1px solid #37527e;background:#162745;color:#eef6ff;padding:11px 15px;border-radius:12px;font-weight:800;cursor:pointer}.btn:hover{transform:translateY(-1px);border-color:#5b7eb6}.btn.primary{background:linear-gradient(135deg,#ff7a3c,#ff405d);border:none;color:white;box-shadow:0 10px 28px #ff405d35}.btn.cyan{background:#123852;border-color:#206b88;color:#bdf5ff}.btn.ghost{background:transparent}
+textarea{width:100%;min-height:210px;background:#081226;color:#d7e6ff;border:1px solid #2a4068;border-radius:14px;padding:14px;font:13px/1.55 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;resize:vertical}label.small{display:block;color:#a9bad8;font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.08em;margin:14px 0 7px}.searchrow{display:flex;gap:9px;align-items:center}.searchrow input{flex:1;background:#081226;color:white;border:1px solid #365079;border-radius:14px;padding:14px 15px;font-size:17px;outline:none}.searchrow input:focus{border-color:var(--cyan);box-shadow:0 0 0 3px #38d9ff1b}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:14px}@media(max-width:650px){.stats{grid-template-columns:repeat(2,1fr)}}.stat{background:#0a142a;border:1px solid #22385f;border-radius:14px;padding:13px}.stat b{display:block;font-size:24px}.stat span{font-size:12px;color:var(--muted)}
+.notice{margin-top:14px;border-left:4px solid var(--yellow);background:#2a240f;padding:12px 14px;border-radius:10px;color:#ffe9a5;font-size:13px}.privacy{border-left-color:var(--green);background:#0c2a22;color:#b7f5d9}
+#results{display:none;margin-top:18px}.summary{display:grid;grid-template-columns:1fr auto;gap:12px;align-items:center}.riskpill{padding:10px 14px;border-radius:999px;font-weight:900;font-size:13px}.high{background:#481421;color:#ff9dac;border:1px solid #7f2637}.med{background:#43300d;color:#ffd27b;border:1px solid #6f5216}.low{background:#123725;color:#94f0ba;border:1px solid #246744}
+.tabs{display:flex;gap:8px;flex-wrap:wrap;margin:18px 0 12px}.tab{padding:9px 12px;border-radius:10px;border:1px solid #2c426b;background:#0a142a;color:#b8c8e5;font-weight:800;cursor:pointer}.tab.active{color:#07101f;background:var(--cyan);border-color:var(--cyan)}.panel{display:none}.panel.active{display:block}
+table{width:100%;border-collapse:separate;border-spacing:0;overflow:hidden;border:1px solid #263e65;border-radius:14px;background:#091428;font-size:13px}th,td{padding:11px 10px;text-align:left;border-bottom:1px solid #1e3355;vertical-align:top}th{background:#132341;color:#bcd2f4;font-size:11px;text-transform:uppercase;letter-spacing:.07em}tr:last-child td{border-bottom:none}.mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}.usage{font-weight:900;font-size:11px;border-radius:999px;padding:4px 8px;display:inline-block}.u-write{background:#4d1722;color:#ff9cad}.u-read{background:#133857;color:#9be9ff}.u-join{background:#3a2e11;color:#ffd575}.u-filter{background:#34225a;color:#cbb6ff}.u-call{background:#113c31;color:#98efcf}.u-other{background:#273248;color:#ccd6e8}
+.chain{display:flex;align-items:center;flex-wrap:wrap;gap:8px;margin:10px 0}.node{border:1px solid #33547e;background:#10213f;border-radius:12px;padding:10px 12px;font-weight:800}.arrow{color:#6f8cb6}.checklist{display:grid;gap:9px}.check{display:flex;gap:10px;align-items:flex-start;background:#0a1428;border:1px solid #20375c;border-radius:12px;padding:11px 12px}.check input{margin-top:3px}.empty{padding:28px;text-align:center;color:var(--muted);border:1px dashed #2f466d;border-radius:14px}.footer{max-width:1280px;margin:0 auto;padding:0 24px 38px;color:#7386a6;font-size:12px;text-align:center}
+.kicker{color:var(--orange);font-weight:900;text-transform:uppercase;letter-spacing:.09em;font-size:12px}.filechips{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}.chip{border:1px solid #284268;background:#0b1730;border-radius:999px;padding:6px 9px;color:#bfd1ee;font-size:12px}.boom{font-size:24px}.codebox{white-space:pre-wrap;background:#071124;border:1px solid #223a61;padding:12px;border-radius:12px;color:#d6e7ff;max-height:320px;overflow:auto}
+</style>
+</head>
+<body>
+<header>
+  <div class="brand">
+    <div class="kicker">Legacy + Automation Toolkit</div>
+    <h1>SQL <span>BLAST RADIUS</span> 💥</h1>
+    <p>Know what breaks <strong>before</strong> you break it.</p>
+  </div>
+  <div class="badge">🔒 Local browser analysis • No database login</div>
+</header>
+<main>
+<div class="grid">
+  <section class="card">
+    <h2>1. Load your SQL</h2>
+    <p class="help">Drop SQL Server / T-SQL scripts here. V1 understands common tables, columns, views, procedures, functions, triggers, joins, filters, reads, writes and procedure calls.</p>
+    <div id="drop" class="drop">
+      <strong>Drop .sql files or a folder here</strong>
+      <span class="help">Your source stays on this computer.</span>
+      <div class="btnrow" style="justify-content:center">
+        <label class="btn cyan">Choose SQL files<input id="files" type="file" accept=".sql,.txt" multiple></label>
+        <label class="btn">Choose folder<input id="folder" type="file" webkitdirectory directory multiple></label>
+        <button class="btn ghost" id="sample">Load demo project</button>
+      </div>
+    </div>
+    <div id="filechips" class="filechips"></div>
+    <label class="small" for="paste">Or paste SQL</label>
+    <textarea id="paste" placeholder="Paste a stored procedure, view, trigger, migration, or SQL script here..."></textarea>
+    <div class="btnrow"><button class="btn" id="addPaste">Add pasted SQL</button><button class="btn ghost" id="clear">Clear all</button></div>
+    <div class="notice privacy">🔒 Files are parsed in your browser. This V1 does not upload SQL source to a server.</div>
+  </section>
+
+  <section class="card">
+    <h2>2. Pick the thing you're changing</h2>
+    <p class="help">Search a table, column, view, function or procedure. Examples: <span class="mono">CUSTOMER.ACCOUNT_STATUS</span>, <span class="mono">ACCOUNT_STATUS</span>, <span class="mono">vw_ActiveCustomers</span>.</p>
+    <label class="small" for="target">Target</label>
+    <div class="searchrow"><input id="target" placeholder="CUSTOMER.ACCOUNT_STATUS"><button class="btn primary" id="analyze">WHAT BREAKS? 💥</button></div>
+    <div class="stats">
+      <div class="stat"><b id="sFiles">0</b><span>SQL files</span></div>
+      <div class="stat"><b id="sObjects">0</b><span>objects found</span></div>
+      <div class="stat"><b id="sRefs">0</b><span>references</span></div>
+      <div class="stat"><b id="sWarnings">0</b><span>review flags</span></div>
+    </div>
+    <div class="notice">⚠️ Static analysis is conservative. Dynamic SQL, synonyms, generated SQL and runtime metadata can hide dependencies. Treat this as a fast impact map — not a substitute for database-native dependency checks and testing.</div>
+    <div style="margin-top:18px;font-weight:900;color:#ffd5dc">“It should be fine” is not an impact analysis. 😂</div>
+  </section>
+</div>
+
+<section class="card" id="results">
+  <div class="summary">
+    <div><div class="kicker">Blast radius for</div><h2 id="resultTitle" style="margin-top:4px"></h2><div id="resultSub" class="help"></div></div>
+    <div id="overallRisk" class="riskpill med">REVIEW</div>
+  </div>
+  <div class="tabs">
+    <button class="tab active" data-tab="refs">References</button>
+    <button class="tab" data-tab="deps">Dependency Map</button>
+    <button class="tab" data-tab="check">Change Checklist</button>
+    <button class="tab" data-tab="lines">Exact Lines</button>
+  </div>
+  <div id="refs" class="panel active"></div>
+  <div id="deps" class="panel"></div>
+  <div id="check" class="panel"></div>
+  <div id="lines" class="panel"></div>
+  <div class="btnrow" style="margin-top:16px"><button class="btn cyan" id="exportCsv">Download impact CSV</button><button class="btn" id="exportTxt">Download report</button></div>
+</section>
+</main>
+<div class="footer">SQL Blast Radius V1 • T-SQL focused • Runs locally in your browser</div>
+<script>
+const state={files:[],objects:[],refs:[],warnings:[],last:null};
+const $=id=>document.getElementById(id);
+function escapeHtml(s=''){return s.replace(/[&<>\"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))}
+function norm(s=''){return s.replace(/[\[\]`\"]/g,'').replace(/^dbo\./i,'').trim().toUpperCase()}
+function basename(s=''){return s.split(/[\\/]/).pop()}
+function stripLineComments(line){let q=false,out='';for(let i=0;i<line.length;i++){if(line[i]==="'"&&line[i-1]!=="\\")q=!q;if(!q&&line[i]=='-'&&line[i+1]=='-')break;out+=line[i]}return out}
+function detectObject(line){
+ const m=line.match(/^\s*(?:CREATE\s+(?:OR\s+ALTER\s+)?|ALTER\s+)(PROCEDURE|PROC|VIEW|FUNCTION|TRIGGER)\s+([\[\]\w.$#]+)/i);
+ return m?{type:m[1].toUpperCase().replace('PROC','PROCEDURE'),name:m[2]}:null;
+}
+function classify(line,target){
+ const u=line.toUpperCase(), t=target.toUpperCase();
+ if(/\b(UPDATE|INSERT\s+INTO|DELETE\s+FROM|MERGE\s+(?:INTO\s+)?|SET)\b/.test(u)) return 'WRITE';
+ if(/\b(EXEC|EXECUTE|CALL)\b/.test(u)) return 'CALL';
+ if(/\bJOIN\b/.test(u)) return 'JOIN';
+ if(/\b(WHERE|HAVING|WHEN)\b/.test(u)) return 'FILTER';
+ if(/\bSELECT\b/.test(u)||/\bFROM\b/.test(u)) return 'READ';
+ return 'OTHER';
+}
+function riskFor(usage,line){
+ const u=line.toUpperCase();
+ if(usage==='WRITE'||usage==='CALL') return 'HIGH';
+ if(/CAST\s*\(|CONVERT\s*\(|SUBSTRING\s*\(|LEFT\s*\(|RIGHT\s*\(|VARCHAR\s*\(|CHAR\s*\(/i.test(u)) return 'HIGH';
+ if(usage==='JOIN'||usage==='FILTER') return 'REVIEW';
+ return 'LOW';
+}
+function parseAll(){
+ state.objects=[];state.refs=[];state.warnings=[];
+ for(const f of state.files){
+  let current={type:'SCRIPT',name:basename(f.name)};
+  const lines=f.text.split(/\r?\n/);
+  lines.forEach((raw,i)=>{
+   const line=stripLineComments(raw); const obj=detectObject(line);
+   if(obj){current={...obj,file:f.name,line:i+1};state.objects.push({...current})}
+   if(/\bEXEC(?:UTE)?\s*\(\s*[@N']/i.test(line)) state.warnings.push({file:f.name,line:i+1,msg:'Dynamic SQL / dynamic EXEC may hide dependencies'});
+   if(/\bsp_executesql\b/i.test(line)) state.warnings.push({file:f.name,line:i+1,msg:'sp_executesql may hide runtime dependencies'});
+  });
+ }
+ updateStats();
+}
+function updateStats(){ $('sFiles').textContent=state.files.length;$('sObjects').textContent=state.objects.length;$('sWarnings').textContent=state.warnings.length;$('sRefs').textContent=state.refs.length; renderChips();}
+function renderChips(){ $('filechips').innerHTML=state.files.map(f=>`<span class="chip">${escapeHtml(basename(f.name))}</span>`).join('')}
+async function addFiles(fileList){for(const file of fileList){if(!/\.(sql|txt)$/i.test(file.name))continue;const text=await file.text();state.files.push({name:file.webkitRelativePath||file.name,text})}dedupe();parseAll()}
+function dedupe(){const m=new Map();for(const f of state.files)m.set(f.name,f);state.files=[...m.values()]}
+function addText(name,text){if(!text.trim())return;state.files.push({name,text});dedupe();parseAll()}
+
+// Tammy Builds privacy-safe usage analytics: event metadata only; never source/document contents.
+const TB_ANALYTICS_KEY = "phc_uzRgkY7jYhKLRh2zsGMVJaaPhSP8tsaSNsgvgqjsytXz";
+const TB_ANALYTICS_HOST = "https://us.i.posthog.com";
+function tbAnalyticsId() {
+  const k = "tammy_builds_analytics_id";
+  let id = localStorage.getItem(k);
+  if (!id) { id = (crypto.randomUUID ? crypto.randomUUID() : `tb-${Date.now()}-${Math.random().toString(36).slice(2)}`); localStorage.setItem(k,id); }
+  return id;
+}
+function tbTrack(event, tool, extra={}) {
+  const body = { api_key: TB_ANALYTICS_KEY, event, properties: { distinct_id: tbAnalyticsId(), tool, source: "web", ...extra } };
+  fetch(`${TB_ANALYTICS_HOST}/i/v0/e/`, { method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify(body), keepalive:true }).catch(()=>{});
+}
+
+function usageClass(u){return {'WRITE':'u-write','READ':'u-read','JOIN':'u-join','FILTER':'u-filter','CALL':'u-call'}[u]||'u-other'}
+function segmentFile(f){
+ const lines=f.text.split(/\r?\n/); const segs=[]; let seg={object:{type:'SCRIPT',name:basename(f.name)},start:1,lines:[]};
+ lines.forEach((raw,i)=>{const obj=detectObject(stripLineComments(raw)); if(obj && seg.lines.length){segs.push(seg);seg={object:{...obj,file:f.name,line:i+1},start:i+1,lines:[]}} else if(obj){seg.object={...obj,file:f.name,line:i+1};seg.start=i+1} seg.lines.push({raw,line:i+1,clean:stripLineComments(raw)})});
+ if(seg.lines.length)segs.push(seg); return segs;
+}
+function analyze(){
+ const q=$('target').value.trim(); if(!q){$('target').focus();return}
+ tbTrack('analysis_started','sql_blast_radius');
+ const nt=norm(q), parts=nt.split('.'), leaf=parts[parts.length-1], parent=parts.length>1?parts[parts.length-2]:null;
+ const refs=[];
+ for(const f of state.files){
+  for(const seg of segmentFile(f)){
+   const contextNorm=norm(seg.lines.map(x=>x.clean).join(' '));
+   const parentContext=!parent || contextNorm.includes(parent);
+   for(const x of seg.lines){
+    const nline=norm(x.clean); let hit=false, strength='direct';
+    if(parent){
+      if(nline.includes(`${parent}.${leaf}`)){hit=true;strength='direct'}
+      else if(parentContext && nline.includes(leaf)){hit=true;strength='context'}
+    } else hit=nline.includes(leaf);
+    if(hit){const usage=classify(x.clean,nt);const risk=riskFor(usage,x.clean);refs.push({file:f.name,line:x.line,object:seg.object.name,objectType:seg.object.type,usage,risk,text:x.raw.trim(),strength})}
+   }
+  }
+ }
+ // Build object dependency edges based on references to defined object names.
+ const objNames=state.objects.map(o=>norm(o.name)); const edges=[];
+ for(const f of state.files){
+  for(const seg of segmentFile(f)){
+   const segName=norm(seg.object.name);
+   const textNorm=norm(seg.lines.map(x=>x.clean).join(' '));
+   for(const on of objNames){if(segName!==on && textNorm.includes(on))edges.push({from:segName,to:on,file:f.name,line:seg.start})}
+  }
+ }
+ // Downstream BFS: objects that depend on objects touching your target.
+ const seeds=new Set(); for(const r of refs)seeds.add(norm(r.object)); for(const o of state.objects){if(norm(o.name)===leaf||norm(o.name)===nt)seeds.add(norm(o.name))}
+ const downstream=new Set(); let frontier=[...seeds];
+ for(let depth=0;depth<5 && frontier.length;depth++){const next=[];for(const e of edges){if(frontier.includes(e.to)&&!seeds.has(e.from)&&!downstream.has(e.from)){downstream.add(e.from);next.push(e.from)}}frontier=next}
+ const high=refs.filter(r=>r.risk==='HIGH').length, med=refs.filter(r=>r.risk==='REVIEW').length;
+ const overall=high?'HIGH':med?'REVIEW':refs.length?'LOW':'LOW';
+ state.refs=refs;state.last={q,refs,edges,seeds:[...seeds],downstream:[...downstream],overall}; updateStats(); renderResults();
+ tbTrack('analysis_completed','sql_blast_radius',{result_count:refs.length});
+}
+function renderResults(){
+ const x=state.last;if(!x)return;$('results').style.display='block';$('resultTitle').textContent=x.q;
+ $('resultSub').textContent=`${x.refs.length} direct reference${x.refs.length===1?'':'s'} across ${new Set(x.refs.map(r=>r.file)).size} file${new Set(x.refs.map(r=>r.file)).size===1?'':'s'} • ${x.downstream.length} downstream object${x.downstream.length===1?'':'s'} detected`;
+ const rp=$('overallRisk');rp.textContent=x.overall==='HIGH'?'HIGH RISK':x.overall==='REVIEW'?'REVIEW':'LOW RISK';rp.className='riskpill '+(x.overall==='HIGH'?'high':x.overall==='REVIEW'?'med':'low');
+ renderRefs();renderDeps();renderChecklist();renderLines();$('results').scrollIntoView({behavior:'smooth',block:'start'});
+}
+function renderRefs(){const rs=state.last.refs;if(!rs.length){$('refs').innerHTML='<div class="empty">No direct references found. Try a shorter object or column name, and remember that dynamic SQL can hide dependencies.</div>';return}
+ $('refs').innerHTML=`<table><thead><tr><th>Risk</th><th>Usage</th><th>Object</th><th>File</th><th>Line</th><th>Source</th></tr></thead><tbody>${rs.map(r=>`<tr><td><span class="riskpill ${r.risk==='HIGH'?'high':r.risk==='REVIEW'?'med':'low'}" style="padding:4px 7px">${r.risk}</span></td><td><span class="usage ${usageClass(r.usage)}">${r.usage}</span></td><td><b>${escapeHtml(r.object)}</b><div class="help">${escapeHtml(r.objectType)}</div></td><td>${escapeHtml(basename(r.file))}</td><td>${r.line}</td><td class="mono">${escapeHtml(r.text.slice(0,170))}</td></tr>`).join('')}</tbody></table>`}
+function renderDeps(){const x=state.last;if(!x.downstream.length){$('deps').innerHTML='<div class="empty">No downstream object chain detected from the loaded scripts. Direct references are still shown in the References tab.</div>';return}
+ let html='<div class="help">Potential downstream objects that depend on objects touching your target:</div>';
+ for(const d of x.downstream){html+=`<div class="chain"><span class="node">${escapeHtml(x.q)}</span><span class="arrow">→</span><span class="node">${escapeHtml(d)}</span></div>`}
+ html+='<div class="notice">Dependency chains are inferred from loaded scripts only. Missing files, synonyms and dynamic SQL may expand the real blast radius.</div>';$('deps').innerHTML=html}
+function renderChecklist(){const rs=state.last.refs;const items=[];const add=s=>{if(!items.includes(s))items.push(s)};
+ if(rs.some(r=>r.usage==='WRITE'))add('Retest every INSERT / UPDATE / DELETE / MERGE path touching this target.');
+ if(rs.some(r=>r.usage==='JOIN'))add('Validate joins, keys, indexes and datatype compatibility.');
+ if(rs.some(r=>r.usage==='FILTER'))add('Recheck WHERE / HAVING / CASE logic and expected result sets.');
+ if(rs.some(r=>r.usage==='CALL'))add('Verify procedure/function signatures and callers.');
+ if(rs.some(r=>/CAST|CONVERT|VARCHAR|CHAR|SUBSTRING|LEFT\(|RIGHT\(/i.test(r.text)))add('Review casts, declared lengths and string-manipulation assumptions.');
+ add('Run database-native dependency checks before production changes.');add('Execute regression tests for all affected objects and downstream reports/jobs.');
+ if(state.warnings.length)add('Inspect dynamic SQL manually; static analysis cannot guarantee runtime references.');
+ $('check').innerHTML=`<div class="checklist">${items.map((s,i)=>`<label class="check"><input type="checkbox"><span><b>${i+1}.</b> ${escapeHtml(s)}</span></label>`).join('')}</div>`}
+function renderLines(){const rs=state.last.refs;if(!rs.length){$('lines').innerHTML='<div class="empty">No matching source lines.</div>';return}let by={};for(const r of rs)(by[r.file]??=[]).push(r);$('lines').innerHTML=Object.entries(by).map(([f,arr])=>`<h3>${escapeHtml(basename(f))}</h3><div class="codebox mono">${arr.map(r=>`${String(r.line).padStart(5)} | ${r.text}`).map(escapeHtml).join('\n')}</div>`).join('')}
+function download(name,text,type='text/plain'){const b=new Blob([text],{type});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)}
+function exportCsv(){if(!state.last)return;tbTrack('json_exported','sql_blast_radius',{format:'csv'});const rows=[['risk','usage','object','object_type','file','line','source'],...state.last.refs.map(r=>[r.risk,r.usage,r.object,r.objectType,r.file,r.line,r.text])];const csv=rows.map(row=>row.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(',')).join('\n');download('sql-blast-radius-impact.csv',csv,'text/csv')}
+function exportTxt(){if(!state.last)return;tbTrack('json_exported','sql_blast_radius',{format:'txt'});const x=state.last;let t=`SQL BLAST RADIUS\nTarget: ${x.q}\nOverall risk: ${x.overall}\nDirect refs: ${x.refs.length}\nDownstream objects: ${x.downstream.length}\n\n`;for(const r of x.refs)t+=`[${r.risk}] ${r.usage} | ${r.object} | ${r.file}:${r.line}\n${r.text}\n\n`;if(x.downstream.length)t+='Downstream:\n'+x.downstream.map(d=>'- '+d).join('\n')+'\n';download('sql-blast-radius-report.txt',t)}
+function loadDemo(){state.files=[];addText('01_schema.sql',`CREATE TABLE dbo.Customer (\n  Customer_ID int NOT NULL,\n  Account_Status varchar(2) NOT NULL,\n  Customer_Name varchar(80)\n);\nGO\nCREATE VIEW dbo.vw_ActiveCustomers AS\nSELECT Customer_ID, Customer_Name, Account_Status\nFROM dbo.Customer\nWHERE Account_Status = 'AC';`);addText('02_update_customer.sql',`CREATE OR ALTER PROCEDURE dbo.usp_UpdateCustomer\n @Customer_ID int,\n @Account_Status varchar(2)\nAS\nUPDATE dbo.Customer\nSET Account_Status = @Account_Status\nWHERE Customer_ID = @Customer_ID;`);addText('03_reporting.sql',`CREATE OR ALTER PROCEDURE dbo.usp_DailyReporting AS\nSELECT c.Customer_ID, c.Account_Status\nFROM dbo.vw_ActiveCustomers c\nJOIN dbo.Customer x ON x.Customer_ID = c.Customer_ID\nWHERE c.Account_Status IN ('AC','PD');`);addText('04_audit.sql',`CREATE TRIGGER dbo.trg_CustomerAudit ON dbo.Customer\nAFTER UPDATE AS\nBEGIN\n INSERT INTO dbo.Customer_Audit(Customer_ID, Account_Status)\n SELECT Customer_ID, Account_Status FROM inserted;\nEND;`);$('target').value='CUSTOMER.ACCOUNT_STATUS'}
+$('files').addEventListener('change',e=>addFiles(e.target.files));$('folder').addEventListener('change',e=>addFiles(e.target.files));$('addPaste').onclick=()=>{addText('pasted-'+(state.files.length+1)+'.sql',$('paste').value);$('paste').value=''};$('clear').onclick=()=>{state.files=[];state.refs=[];state.objects=[];state.warnings=[];state.last=null;$('results').style.display='none';updateStats()};$('sample').onclick=loadDemo;$('analyze').onclick=analyze;$('target').addEventListener('keydown',e=>{if(e.key==='Enter')analyze()});$('exportCsv').onclick=exportCsv;$('exportTxt').onclick=exportTxt;
+for(const t of document.querySelectorAll('.tab'))t.onclick=()=>{document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));document.querySelectorAll('.panel').forEach(x=>x.classList.remove('active'));t.classList.add('active');$(t.dataset.tab).classList.add('active')};
+const drop=$('drop');['dragenter','dragover'].forEach(ev=>drop.addEventListener(ev,e=>{e.preventDefault();drop.classList.add('drag')}));['dragleave','drop'].forEach(ev=>drop.addEventListener(ev,e=>{e.preventDefault();drop.classList.remove('drag')}));drop.addEventListener('drop',e=>addFiles(e.dataTransfer.files));
+updateStats();
+tbTrack('tool_opened','sql_blast_radius');
+</script>
+
+<style id="tbFeedbackStyles">
+.tb-learning{max-width:1100px;margin:28px auto;padding:20px;border:1px solid rgba(120,140,170,.35);border-radius:18px;background:rgba(20,35,55,.06);font-family:inherit}
+.tb-learning h3{margin:0 0 6px} .tb-learning p{margin:5px 0 12px;line-height:1.5} .tb-feedback-row{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}
+.tb-feedback-row button,.tb-learning button{padding:10px 14px;border-radius:10px;border:1px solid #6b7f9d;background:#174ea6;color:#fff;cursor:pointer;font-weight:700}
+.tb-learning label{display:block;margin-top:10px;font-weight:650} .tb-learning input,.tb-learning select,.tb-learning textarea{width:100%;margin:6px 0 10px;padding:10px;border-radius:10px;border:1px solid #8492a6;background:#fff;color:#102a43}
+.tb-learning textarea{min-height:80px} .tb-hidden{display:none!important} .tb-thanks{font-weight:700;margin-left:8px}
+</style>
+<section class="tb-learning" id="tbLearning">
+  <h3>Help improve SQL Blast Radius</h3>
+  <p>Was this useful? Your feedback is optional. Uploaded file or source contents are never included in feedback.</p>
+  <div class="tb-feedback-row">
+    <button type="button" data-helpful="yes">Yes</button>
+    <button type="button" data-helpful="no">Not really</button>
+    <button type="button" id="tbProblem">Report a problem / Suggest an improvement</button>
+  </div>
+  <form class='tb-hidden' id='tbFeedbackForm' method='POST' name='tammy-builds-feedback'>
+    <input type="hidden" name="form-name" value="tammy-builds-feedback">
+    <p class="tb-hidden" aria-hidden="true"><label>Leave this blank: <input name="bot-field" tabindex="-1" autocomplete="off"></label></p>
+    <input type="hidden" name="tool" value="sql_blast_radius">
+    <input type="hidden" name="helpful" id="tbHelpful" value="">
+    <input type="hidden" name="page" id="tbPage" value="">
+    <label>What best describes your feedback?
+      <select name="reason" id="tbReason">
+        <option value="">Choose one</option>
+        <option>It worked well</option><option>I wasn't sure what to do</option><option>I didn't have my own data ready</option>
+        <option>It didn't do what I expected</option><option>I found a bug</option><option>I have a feature idea</option><option>Other</option>
+      </select>
+    </label>
+    <label>Optional note — please do not paste private data<textarea name="note" maxlength="500" placeholder="What were you hoping it would do?"></textarea></label>
+    <label>Email if you want a reply<input name="email" type="email" placeholder="you@example.com"></label>
+    <button type="submit">Send feedback</button><span id="tbThanks" class="tb-thanks"></span>
+  </form>
+</section>
+<script>
+(() => {
+  const TOOL='sql_blast_radius';
+  const PH='phc_uzRgkY7jYhKLRh2zsGMVJaaPhSP8tsaSNsgvgqjsytXz';
+  const HOST='https://us.i.posthog.com';
+  function aid(){const k='tammy_builds_analytics_id';let v=localStorage.getItem(k);if(!v){v=(crypto.randomUUID?crypto.randomUUID():`tb-${Date.now()}-${Math.random().toString(36).slice(2)}`);localStorage.setItem(k,v)}return v}
+  function track(event,extra={}){fetch(`${HOST}/i/v0/e/`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({api_key:PH,event,properties:{distinct_id:aid(),tool:TOOL,source:'web',...extra}}),keepalive:true}).catch(()=>{})}
+  const ready=()=>{
+    const page=document.getElementById('tbPage'); if(page) page.value=location.href;
+    const sample=document.querySelector('#load-sample, #sample, #sampleBtn'); if(sample) sample.addEventListener('click',()=>track('sample_clicked'));
+    const analyze=document.querySelector('#analyze, #decodeBtn'); if(analyze) analyze.addEventListener('click',()=>track('analysis_started'));
+    document.querySelectorAll('[data-helpful]').forEach(btn=>btn.addEventListener('click',()=>{document.getElementById('tbHelpful').value=btn.dataset.helpful;document.getElementById('tbFeedbackForm').classList.remove('tb-hidden');track('feedback_prompt_answered',{helpful:btn.dataset.helpful})}));
+    const problem=document.getElementById('tbProblem'); if(problem) problem.addEventListener('click',()=>{document.getElementById('tbFeedbackForm').classList.remove('tb-hidden');document.getElementById('tbReason').value='I found a bug';track('feedback_opened',{kind:'problem_or_suggestion'})});
+    const form=document.getElementById('tbFeedbackForm'); if(form) form.addEventListener('submit',async e=>{e.preventDefault();const fd=new FormData(form);try{await fetch('/',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:new URLSearchParams(fd).toString()});track('feedback_submitted',{helpful:fd.get('helpful')||'',reason:fd.get('reason')||'',contact_opt_in:Boolean(fd.get('email'))});document.getElementById('tbThanks').textContent='Thank you — feedback sent.';form.querySelector('button[type="submit"]').disabled=true}catch(err){document.getElementById('tbThanks').textContent='Could not send right now. Please try again.'}});
+  };
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',ready); else ready();
+})();
+</script>
+
+</body>
+</html>
+<script async src="/.netlify/scripts/hud?variant=public" data-nf-variant="public" data-netlify-site-id="e3a2d01a-3356-461a-8e8b-b568db9f6058" data-app-host="app.netlify.com"></script>

@@ -1,0 +1,838 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+<!-- This site is hosted on Netlify. Anyone can build and deploy a site
+     like this one for free: https://netlify.new/?utm_campaign=loops&utm_source=ai-legible&utm_medium=owned&utm_content=comment&utm_id=bd8d2938-0fc3-4aad-be28-7b552588dc1f
+     Netlify hosting facts for this site: static/SSR served via Netlify Edge. -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="COBOL X-Ray turns COBOL copybooks into readable field maps, byte layouts, SQL, JSON, and CSV headers. Runs entirely in your browser." />
+  <title>COBOL X-Ray — Legacy Data, Made Readable</title>
+  <style>
+:root {
+  --ink: #0d1b2a;
+  --navy: #102a43;
+  --blue: #174ea6;
+  --blue2: #1d64d8;
+  --gold: #d5a62e;
+  --gold-soft: #fff7d6;
+  --paper: #f5f8fc;
+  --card: #ffffff;
+  --line: #dbe4ef;
+  --muted: #62748a;
+  --success: #176b4d;
+  --danger: #9a5b00;
+  --shadow: 0 18px 50px rgba(16, 42, 67, 0.10);
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  margin: 0;
+  color: var(--ink);
+  background:
+    radial-gradient(circle at 12% 0%, rgba(213,166,46,.16), transparent 28rem),
+    linear-gradient(180deg, #eef4fb 0%, #f8fbff 40%, #f5f8fc 100%);
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+a { color: var(--blue); }
+button, textarea, input { font: inherit; }
+button { cursor: pointer; }
+.page-shell { max-width: 1260px; margin: 0 auto; padding: 28px 22px 60px; }
+.hero {
+  border-radius: 28px;
+  color: #fff;
+  background: linear-gradient(135deg, #0b1d33 0%, #123d73 62%, #174ea6 100%);
+  padding: 28px 34px 34px;
+  box-shadow: var(--shadow);
+  overflow: hidden;
+  position: relative;
+}
+.hero::after {
+  content: "";
+  position: absolute;
+  width: 330px; height: 330px; border-radius: 50%;
+  right: -120px; top: -150px;
+  background: rgba(213,166,46,.19);
+}
+.brand-row { display: flex; align-items: center; gap: 14px; position: relative; z-index: 1; }
+.brand-mark {
+  width: 52px; height: 52px; border-radius: 14px;
+  display: grid; place-items: center;
+  background: var(--gold); color: #14233a; font-weight: 900; letter-spacing: -.04em;
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,.3);
+}
+.eyebrow { text-transform: uppercase; letter-spacing: .12em; font-size: .7rem; color: #bed0ea; font-weight: 800; }
+h1 { margin: 2px 0 0; font-size: clamp(2rem, 4vw, 3.4rem); line-height: .95; letter-spacing: -.04em; }
+.ig-link { margin-left: auto; color: #fff; text-decoration: none; border: 1px solid rgba(255,255,255,.25); padding: 9px 13px; border-radius: 999px; font-size: .86rem; position: relative; z-index: 2; }
+.hero-grid { display: grid; grid-template-columns: 1.25fr .75fr; gap: 28px; align-items: end; margin-top: 32px; position: relative; z-index: 1; }
+.kicker { font-size: clamp(1.8rem, 3.8vw, 3.8rem); line-height: 1.03; margin: 0 0 14px; font-weight: 900; letter-spacing: -.045em; }
+.hero-copy { max-width: 760px; color: #d9e6f6; font-size: 1.08rem; line-height: 1.65; margin: 0; }
+.privacy-pill { margin-top: 18px; display: inline-flex; background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.17); padding: 9px 13px; border-radius: 999px; color: #f5f9ff; font-size: .88rem; }
+.hero-code { background: rgba(4,18,35,.58); border: 1px solid rgba(255,255,255,.15); border-radius: 18px; padding: 18px; }
+.hero-code-label { color: #9db5d3; font-size: .68rem; letter-spacing: .14em; font-weight: 900; }
+.hero-code code { display: block; margin: 7px 0; color: #ffe894; font-size: .94rem; white-space: nowrap; overflow-x: auto; }
+.arrow { text-align: center; color: var(--gold); font-size: 1.5rem; }
+.decoded-mini { display: flex; justify-content: space-between; gap: 10px; align-items: center; background: rgba(255,255,255,.08); padding: 10px; border-radius: 10px; }
+.decoded-mini span { color: #b9cbe0; font-size: .78rem; }
+main { margin-top: 24px; }
+.workspace-card, .results { background: var(--card); border: 1px solid var(--line); border-radius: 24px; padding: 28px; box-shadow: var(--shadow); }
+.results { margin-top: 22px; }
+.section-heading { display: flex; justify-content: space-between; align-items: center; gap: 16px; margin-bottom: 20px; }
+.section-heading > div:first-child { display: flex; align-items: center; gap: 12px; }
+.step { width: 38px; height: 38px; border-radius: 50%; display: grid; place-items: center; color: var(--blue); background: #edf4ff; border: 1px solid #cfe0f7; font-weight: 900; font-size: .82rem; }
+h2 { margin: 0; font-size: 1.5rem; letter-spacing: -.025em; }
+.drop-zone { border: 1.5px dashed #a9bdd5; border-radius: 18px; padding: 24px; text-align: center; background: #f8fbff; transition: .18s ease; }
+.drop-zone:hover, .drop-zone.dragover { border-color: var(--blue2); background: #eef5ff; transform: translateY(-1px); }
+.drop-icon { width: 44px; height: 44px; display: grid; place-items: center; margin: 0 auto 8px; border-radius: 12px; background: #e4efff; color: var(--blue); font-weight: 900; }
+.muted { color: var(--muted); font-size: .88rem; }
+.divider { display: flex; align-items: center; gap: 12px; color: #8b9aab; font-size: .7rem; letter-spacing: .16em; font-weight: 900; margin: 18px 0; }
+.divider::before, .divider::after { content: ""; height: 1px; background: var(--line); flex: 1; }
+textarea { width: 100%; min-height: 265px; resize: vertical; border: 1px solid #cbd7e4; border-radius: 16px; padding: 17px; background: #0b1624; color: #e9f1fb; font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace; line-height: 1.55; font-size: .91rem; outline: none; }
+textarea:focus { border-color: var(--blue2); box-shadow: 0 0 0 4px rgba(29,100,216,.1); }
+.input-actions { display: flex; align-items: center; justify-content: space-between; gap: 18px; margin-top: 16px; }
+.primary-button, .ghost-button, .small-button { border: 0; border-radius: 12px; font-weight: 800; }
+.primary-button { padding: 14px 20px; background: linear-gradient(135deg, var(--gold) 0%, #f0c95a 100%); color: #14233a; box-shadow: 0 8px 20px rgba(213,166,46,.22); }
+.primary-button:hover { transform: translateY(-1px); }
+.ghost-button { padding: 10px 13px; background: #f2f6fb; color: var(--navy); border: 1px solid #d7e0eb; }
+.small-button { padding: 8px 11px; background: #edf4ff; color: var(--blue); border: 1px solid #d6e5fa; font-size: .8rem; }
+.summary-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+.summary-card { border: 1px solid var(--line); border-radius: 16px; padding: 16px; background: linear-gradient(180deg,#fff,#f8fbff); }
+.summary-label { display: block; color: var(--muted); font-size: .76rem; margin-bottom: 5px; }
+.summary-card strong { font-size: 1.7rem; }
+.warning-panel { margin-top: 14px; padding: 14px 16px; border-radius: 14px; background: #fff8e7; border: 1px solid #efdaa1; color: #674b00; }
+.warning-panel ul { margin: 7px 0 0 18px; padding: 0; }
+.tabs { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 22px; border-bottom: 1px solid var(--line); padding-bottom: 10px; }
+.tab { border: 0; background: transparent; color: var(--muted); font-weight: 800; padding: 9px 11px; border-radius: 10px; }
+.tab.active { background: #eaf2ff; color: var(--blue); }
+.tab-panel { display: none; padding-top: 16px; }
+.tab-panel.active { display: block; }
+.panel-toolbar { min-height: 38px; display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 9px; }
+.table-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 14px; }
+table { width: 100%; border-collapse: collapse; min-width: 980px; }
+th { background: #f4f7fb; color: #5d6e82; text-align: left; font-size: .72rem; letter-spacing: .04em; text-transform: uppercase; padding: 11px 10px; border-bottom: 1px solid var(--line); }
+td { padding: 11px 10px; border-bottom: 1px solid #edf1f5; font-size: .84rem; vertical-align: top; }
+tbody tr:hover { background: #f8fbff; }
+.field-name { font-family: "SFMono-Regular", Consolas, monospace; font-weight: 800; color: #163d71; }
+.group-row { background: #fbfcfe; }
+.group-row .field-name { color: #6b7787; }
+.pill { display: inline-flex; align-items: center; border-radius: 999px; background: #eef3f8; padding: 4px 7px; font-size: .72rem; white-space: nowrap; }
+.pill.packed { background: #fff4ce; color: #6d5000; }
+.record-ruler { display: flex; min-height: 90px; border-radius: 15px; overflow: hidden; border: 1px solid #b8c8da; background: #f6f9fc; }
+.record-segment { min-width: 42px; position: relative; display: flex; align-items: center; justify-content: center; text-align: center; padding: 8px; border-right: 1px solid rgba(13,27,42,.12); background: #eaf2ff; color: #183a68; font-size: .7rem; font-weight: 800; overflow: hidden; }
+.record-segment:nth-child(3n+2) { background: #fff4d6; }
+.record-segment:nth-child(3n+3) { background: #edf8f3; }
+.record-list { margin-top: 14px; display: grid; gap: 8px; }
+.record-line { display: grid; grid-template-columns: 125px minmax(180px,1fr) 120px 1fr; gap: 10px; align-items: center; padding: 9px 11px; border: 1px solid #e2e8f0; border-radius: 11px; font-size: .82rem; }
+.code-output { margin: 0; border-radius: 14px; min-height: 300px; max-height: 580px; overflow: auto; padding: 17px; background: #0b1624; color: #eaf2fb; font-family: "SFMono-Regular", Consolas, monospace; line-height: 1.55; font-size: .87rem; white-space: pre; }
+.code-output.single-line { min-height: 120px; white-space: pre-wrap; word-break: break-all; }
+.why-card { margin-top: 20px; border-radius: 17px; padding: 17px; display: flex; gap: 12px; background: linear-gradient(135deg,#102a43,#174ea6); color: #fff; }
+.why-icon { font-size: 1.5rem; }
+.why-card p { margin: 5px 0 0; color: #d8e6f7; line-height: 1.5; font-size: .9rem; }
+.hidden { display: none !important; }
+footer { text-align: center; color: #647488; padding: 28px 12px 0; font-size: .86rem; }
+footer > div { margin: 3px 0; }
+.fine-print { max-width: 900px; margin: 13px auto 0; font-size: .72rem; line-height: 1.55; color: #8090a2; }
+@media (max-width: 850px) {
+  .page-shell { padding: 14px 12px 42px; }
+  .hero { padding: 22px 18px 26px; border-radius: 20px; }
+  .hero-grid { grid-template-columns: 1fr; }
+  .ig-link { display: none; }
+  .workspace-card, .results { padding: 18px; border-radius: 18px; }
+  .summary-grid { grid-template-columns: repeat(2,1fr); }
+  .section-heading { align-items: flex-start; }
+  .input-actions { align-items: stretch; flex-direction: column; }
+  .primary-button { width: 100%; }
+  .panel-toolbar { align-items: flex-start; flex-direction: column; }
+  .record-line { grid-template-columns: 100px 1fr; }
+  .record-line > :nth-child(3), .record-line > :nth-child(4) { grid-column: 2; }
+}
+
+</style>
+</head>
+<body>
+  <div class="page-shell">
+    <header class="hero">
+      <div class="brand-row">
+        <div class="brand-mark" aria-hidden="true">CX</div>
+        <div>
+          <div class="eyebrow">Tammy Builds with AI & Automation</div>
+          <h1>COBOL X-Ray</h1>
+        </div>
+        <a class="ig-link" href="https://www.instagram.com/rasha_12273/" target="_blank" rel="noreferrer">@rasha_12273</a>
+      </div>
+      <div class="hero-grid">
+        <div>
+          <p class="kicker">Legacy data, made readable.</p>
+          <p class="hero-copy">Paste or upload a COBOL copybook and instantly turn PIC clauses, COMP-3 fields, OCCURS, REDEFINES, and old record layouts into a clean modern field map.</p>
+          <div class="privacy-pill">🔒 Runs in your browser. Your copybook never leaves your computer.</div>
+        </div>
+        <div class="hero-code" aria-label="Example transformation">
+          <div class="hero-code-label">FROM THIS</div>
+          <code>05 BALANCE PIC S9(7)V99 COMP-3.</code>
+          <div class="arrow">↓</div>
+          <div class="hero-code-label">TO THIS</div>
+          <div class="decoded-mini"><strong>DECIMAL(9,2)</strong><span>5 bytes • packed decimal</span></div>
+        </div>
+      </div>
+    </header>
+
+    <main>
+      <section class="workspace-card input-card">
+        <div class="section-heading">
+          <div>
+            <span class="step">01</span>
+            <h2>Give it a copybook</h2>
+          </div>
+          <button id="sampleBtn" class="ghost-button" type="button">Load sample</button>
+        </div>
+
+        <div id="dropZone" class="drop-zone" tabindex="0" role="button" aria-label="Upload a COBOL copybook">
+          <input id="fileInput" type="file" accept=".cpy,.cob,.cbl,.txt,text/plain" hidden />
+          <div class="drop-icon">⬆</div>
+          <div><strong>Drop a .CPY, .COB, .CBL, or .TXT file here</strong></div>
+          <div class="muted">or click to choose a file</div>
+        </div>
+
+        <div class="divider"><span>OR PASTE IT</span></div>
+
+        <textarea id="copybookInput" spellcheck="false" placeholder="01 CUSTOMER-RECORD.\n   05 CUSTOMER-ID      PIC 9(8).\n   05 CUSTOMER-NAME    PIC X(30).\n   05 BALANCE          PIC S9(7)V99 COMP-3."></textarea>
+
+        <div class="input-actions">
+          <div id="fileName" class="muted"></div>
+          <button id="decodeBtn" class="primary-button" type="button">WHAT THE PIC? →</button>
+        </div>
+      </section>
+
+      <section id="resultsSection" class="results hidden" aria-live="polite">
+        <div class="section-heading results-heading">
+          <div>
+            <span class="step">02</span>
+            <h2>Here’s what’s really in it</h2>
+          </div>
+          <button id="resetBtn" class="ghost-button" type="button">Start over</button>
+        </div>
+
+        <div class="summary-grid">
+          <div class="summary-card"><span class="summary-label">Fields</span><strong id="fieldCount">0</strong></div>
+          <div class="summary-card"><span class="summary-label">Estimated record bytes</span><strong id="recordBytes">0</strong></div>
+          <div class="summary-card"><span class="summary-label">Packed / binary</span><strong id="binaryCount">0</strong></div>
+          <div class="summary-card"><span class="summary-label">Warnings</span><strong id="warningCount">0</strong></div>
+        </div>
+
+        <div id="warningPanel" class="warning-panel hidden"></div>
+
+        <div class="tabs" role="tablist" aria-label="Output views">
+          <button class="tab active" data-tab="fieldmap" type="button">Field Map</button>
+          <button class="tab" data-tab="recordmap" type="button">Byte Map</button>
+          <button class="tab" data-tab="sql" type="button">SQL</button>
+          <button class="tab" data-tab="json" type="button">JSON</button>
+          <button class="tab" data-tab="csv" type="button">CSV Header</button>
+        </div>
+
+        <div id="fieldmap" class="tab-panel active">
+          <div class="panel-toolbar">
+            <div class="muted">Hover over a row for the plain-English explanation.</div>
+            <button id="downloadCsvBtn" class="small-button" type="button">Download field map CSV</button>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Level</th>
+                  <th>Field</th>
+                  <th>PIC</th>
+                  <th>Usage</th>
+                  <th>Bytes</th>
+                  <th>Position</th>
+                  <th>Modern type</th>
+                  <th>Notes</th>
+                </tr>
+              </thead>
+              <tbody id="fieldTableBody"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div id="recordmap" class="tab-panel">
+          <div class="record-ruler" id="recordRuler"></div>
+          <div id="recordList" class="record-list"></div>
+        </div>
+
+        <div id="sql" class="tab-panel">
+          <div class="panel-toolbar"><span class="muted">Suggested relational schema — review OCCURS/REDEFINES before production use.</span><button class="small-button copy-output" data-target="sqlOutput" type="button">Copy SQL</button></div>
+          <pre id="sqlOutput" class="code-output"></pre>
+        </div>
+
+        <div id="json" class="tab-panel">
+          <div class="panel-toolbar"><span class="muted">Readable sample structure based on the copybook hierarchy.</span><button class="small-button copy-output" data-target="jsonOutput" type="button">Copy JSON</button></div>
+          <pre id="jsonOutput" class="code-output"></pre>
+        </div>
+
+        <div id="csv" class="tab-panel">
+          <div class="panel-toolbar"><span class="muted">Flattened header names for quick exports.</span><button class="small-button copy-output" data-target="csvOutput" type="button">Copy header</button></div>
+          <pre id="csvOutput" class="code-output single-line"></pre>
+        </div>
+
+        <div class="why-card">
+          <div class="why-icon">🧠</div>
+          <div>
+            <strong>Built for legacy reality — not toy examples.</strong>
+            <p>COBOL X-Ray calculates what should be deterministic, then presents it in a way modern developers, analysts, testers, and data teams can actually use.</p>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer>
+      <div><strong>COBOL X-Ray</strong> • Free legacy-data utility</div>
+      <div>Built by Tammy • <a href="https://www.instagram.com/rasha_12273/" target="_blank" rel="noreferrer">@rasha_12273</a></div>
+      <p class="fine-print">V1 uses common IBM/mainframe storage conventions. Binary sizing, SYNC, sign handling, compiler options, variable OCCURS, and unusual edited PIC clauses can be compiler-dependent. Always validate generated mappings against your actual compiler and data definition.</p>
+    </footer>
+  </div>
+
+  <script>
+(() => {
+  const sample = `000100 01  CUSTOMER-RECORD.\n000200     05  CUSTOMER-ID              PIC 9(8).\n000300     05  CUSTOMER-NAME            PIC X(30).\n000400     05  ACCOUNT-INFO.\n000500         10  ACCOUNT-BALANCE       PIC S9(7)V99 COMP-3.\n000600         10  CREDIT-LIMIT          PIC S9(7)V99 COMP-3.\n000700         10  STATUS-CODE           PIC X.\n000800     05  PHONE-NUMBERS OCCURS 3 TIMES.\n000900         10  PHONE-TYPE            PIC X.\n001000         10  PHONE-NUMBER          PIC X(10).\n001100     05  FLAGS                    PIC X(2).\n001200     05  FLAGS-DETAIL REDEFINES FLAGS.\n001300         10  PAPERLESS-FLAG        PIC X.\n001400         10  VIP-FLAG              PIC X.`;
+
+  const el = (id) => document.getElementById(id);
+  const input = el('copybookInput');
+  const fileInput = el('fileInput');
+  const dropZone = el('dropZone');
+  const results = el('resultsSection');
+  let lastResult = null;
+
+  function normalizeLine(raw) {
+    let line = raw.replace(/\t/g, '    ');
+    // Typical fixed-format COBOL: cols 1-6 sequence, col 7 indicator.
+    if (/^(?:\d{6}| {6})[ *\-\/Dd]/.test(line)) {
+      const indicator = line[6];
+      if (indicator === '*' || indicator === '/') return { text: '', comment: true, continuation: false };
+      line = line.slice(7);
+      return { text: line, comment: false, continuation: indicator === '-' };
+    }
+    if (/^\s*\*/.test(line)) return { text: '', comment: true, continuation: false };
+    return { text: line, comment: false, continuation: false };
+  }
+
+  function logicalEntries(text) {
+    const cleaned = [];
+    let current = '';
+    for (const raw of text.split(/\r?\n/)) {
+      const norm = normalizeLine(raw);
+      if (norm.comment) continue;
+      let line = norm.text.replace(/\*>.*$/, '').trim();
+      if (!line) continue;
+
+      const startsEntry = /^(?:0?[1-9]|[1-4]\d|66|77|88)\s+(?:[A-Z0-9][A-Z0-9-]*|FILLER)\b/i.test(line);
+      if (startsEntry && !norm.continuation) {
+        if (current) cleaned.push(current.trim());
+        current = line;
+      } else if (current) {
+        current += ' ' + line;
+      }
+    }
+    if (current) cleaned.push(current.trim());
+    return cleaned.map(s => s.replace(/\.\s*$/, '').replace(/\s+/g, ' ').trim());
+  }
+
+  function expandPic(pic) {
+    const s = (pic || '').toUpperCase().replace(/\s+/g,'');
+    const tokens = [];
+    for (let i = 0; i < s.length;) {
+      const ch = s[i];
+      if (i + 1 < s.length && s[i+1] === '(') {
+        const close = s.indexOf(')', i+2);
+        if (close !== -1) {
+          const n = parseInt(s.slice(i+2, close), 10);
+          if (Number.isFinite(n) && n > 0 && n < 100000) {
+            for (let k=0; k<n; k++) tokens.push(ch);
+            i = close + 1;
+            continue;
+          }
+        }
+      }
+      tokens.push(ch);
+      i++;
+    }
+    return tokens;
+  }
+
+  function picInfo(pic) {
+    if (!pic) return { category: 'group', digits: 0, scale: 0, displayBytes: 0, precision: 0, signed: false };
+    const chars = expandPic(pic);
+    const signed = chars.includes('S') || chars.includes('+') || chars.includes('-');
+    const vIndex = chars.indexOf('V');
+    const digits = chars.filter(c => c === '9').length;
+    const alpha = chars.filter(c => c === 'X' || c === 'A').length;
+    const edited = chars.filter(c => ['Z','*',',','.','$','+','-','/','B','0'].includes(c)).length;
+    let scale = 0;
+    if (vIndex >= 0) scale = chars.slice(vIndex+1).filter(c => c === '9').length;
+    const precision = digits;
+    // S, V and P do not consume normal DISPLAY positions. Edited chars do.
+    const displayBytes = chars.filter(c => !['S','V','P'].includes(c)).length;
+    let category = 'text';
+    if (digits > 0 && alpha === 0) category = edited > 0 ? 'numeric-edited' : 'numeric';
+    else if (alpha > 0 && digits === 0) category = 'text';
+    else if (alpha > 0 && digits > 0) category = 'alphanumeric';
+    return { category, digits, scale, displayBytes, precision, signed, chars };
+  }
+
+  function usageBytes(pic, usage, signSeparate) {
+    const info = picInfo(pic);
+    const u = (usage || 'DISPLAY').toUpperCase();
+    if (!pic) return 0;
+    if (/COMP-1/.test(u)) return 4;
+    if (/COMP-2/.test(u)) return 8;
+    if (/COMP-3|PACKED-DECIMAL/.test(u)) {
+      const d = Math.max(1, info.digits);
+      return Math.ceil((d + 1) / 2);
+    }
+    if (/COMP-4|COMP-5|BINARY|(^|\s)COMP($|\s)/.test(u)) {
+      const d = Math.max(1, info.digits);
+      if (d <= 4) return 2;
+      if (d <= 9) return 4;
+      return 8;
+    }
+    return info.displayBytes + (signSeparate && info.signed ? 1 : 0);
+  }
+
+  function modernType(field) {
+    if (!field.pic) return 'GROUP';
+    const info = picInfo(field.pic);
+    if (info.category === 'text' || info.category === 'alphanumeric') {
+      const n = Math.max(1, info.displayBytes);
+      return n === 1 ? 'CHAR(1)' : `VARCHAR(${n})`;
+    }
+    if (info.digits > 0) {
+      if (info.scale > 0) return `DECIMAL(${info.precision},${info.scale})`;
+      if (info.precision <= 4) return 'SMALLINT';
+      if (info.precision <= 9) return 'INTEGER';
+      if (info.precision <= 18) return 'BIGINT';
+      return `DECIMAL(${info.precision},0)`;
+    }
+    return 'TEXT';
+  }
+
+  function plainEnglish(field) {
+    if (!field.pic) {
+      const bits = ['Group'];
+      if (field.occurs > 1) bits.push(`repeats ${field.occurs} times`);
+      if (field.redefines) bits.push(`redefines ${field.redefines}`);
+      return bits.join('; ');
+    }
+    const info = picInfo(field.pic);
+    const bits = [];
+    if (info.category === 'text' || info.category === 'alphanumeric') bits.push(`${info.displayBytes}-character text`);
+    if (info.digits > 0) {
+      bits.push(`${info.signed ? 'signed ' : ''}${info.precision}-digit number${info.scale ? ` with ${info.scale} implied decimal place${info.scale===1?'':'s'}` : ''}`);
+    }
+    if (/COMP-3|PACKED-DECIMAL/i.test(field.usage)) bits.push('packed decimal');
+    else if (/COMP|BINARY/i.test(field.usage)) bits.push('binary storage');
+    if (field.occurs > 1) bits.push(`occurs ${field.occurs} times`);
+    if (field.redefines) bits.push(`redefines ${field.redefines}`);
+    return bits.join('; ');
+  }
+
+  function parseEntry(entry, index) {
+    const m = entry.match(/^(\d{1,2})\s+([A-Z0-9][A-Z0-9-]*|FILLER)\b(.*)$/i);
+    if (!m) return null;
+    const level = parseInt(m[1],10);
+    const name = m[2].toUpperCase();
+    const rest = m[3] || '';
+    const picMatch = rest.match(/\bPIC(?:TURE)?\s+([^\s.]+)/i);
+    const redefinesMatch = rest.match(/\bREDEFINES\s+([A-Z0-9-]+)/i);
+    const occursMatch = rest.match(/\bOCCURS\s+(\d+)(?:\s+TO\s+(\d+))?\s+TIMES\b/i);
+    const dependingMatch = rest.match(/\bDEPENDING\s+ON\s+([A-Z0-9-]+)/i);
+    const usageMatch = rest.match(/\b(?:USAGE\s+(?:IS\s+)?)?(COMP-1|COMP-2|COMP-3|COMP-4|COMP-5|COMP|COMPUTATIONAL-1|COMPUTATIONAL-2|COMPUTATIONAL-3|COMPUTATIONAL-4|COMPUTATIONAL-5|BINARY|PACKED-DECIMAL|DISPLAY)\b/i);
+    const signSeparate = /\bSIGN\b.*\bSEPARATE\b/i.test(rest);
+    const pic = picMatch ? picMatch[1].toUpperCase() : '';
+    let usage = usageMatch ? usageMatch[1].toUpperCase().replace('COMPUTATIONAL','COMP') : 'DISPLAY';
+    const occursMin = occursMatch ? parseInt(occursMatch[1],10) : 1;
+    const occursMax = occursMatch ? parseInt(occursMatch[2] || occursMatch[1],10) : 1;
+    return {
+      id: index + 1,
+      level, name, rest, pic, usage,
+      redefines: redefinesMatch ? redefinesMatch[1].toUpperCase() : null,
+      occursMin, occursMax, occurs: occursMax,
+      dependingOn: dependingMatch ? dependingMatch[1].toUpperCase() : null,
+      signSeparate,
+      children: [], parent: null,
+      baseBytes: pic ? usageBytes(pic, usage, signSeparate) : 0,
+      totalBytes: 0, start: null, end: null,
+      warnings: []
+    };
+  }
+
+  function buildTree(fields) {
+    const roots = [];
+    const stack = [];
+    for (const f of fields) {
+      while (stack.length && stack[stack.length-1].level >= f.level) stack.pop();
+      if (stack.length && f.level !== 77 && f.level !== 01) {
+        f.parent = stack[stack.length-1];
+        f.parent.children.push(f);
+      } else roots.push(f);
+      if (!f.pic && f.level !== 88) stack.push(f);
+    }
+    return roots;
+  }
+
+  function computeLayout(group, warnings) {
+    if (group.pic) {
+      group.totalBytes = group.baseBytes * group.occurs;
+      return group.totalBytes;
+    }
+    let cursor = 0;
+    const siblingByName = new Map();
+    for (const child of group.children) {
+      const len = computeLayout(child, warnings);
+      let start = cursor;
+      if (child.redefines) {
+        const target = siblingByName.get(child.redefines);
+        if (target) start = target._relStart;
+        else warnings.push(`${child.name} REDEFINES ${child.redefines}, but the target was not found among its siblings.`);
+      }
+      child._relStart = start;
+      child._relEnd = len ? start + len - 1 : start;
+      if (child.redefines) cursor = Math.max(cursor, start + len);
+      else cursor = start + len;
+      siblingByName.set(child.name, child);
+    }
+    group.baseSpan = cursor;
+    group.totalBytes = cursor * group.occurs;
+    return group.totalBytes;
+  }
+
+  function assignOffsets(group, absoluteStart) {
+    group.start = absoluteStart;
+    group.end = group.totalBytes ? absoluteStart + group.totalBytes - 1 : absoluteStart;
+    if (!group.children.length) return;
+    for (const child of group.children) {
+      const childStart = absoluteStart + (child._relStart || 0);
+      assignOffsets(child, childStart);
+    }
+  }
+
+  function parseCopybook(text) {
+    const warnings = [];
+    const entries = logicalEntries(text);
+    const fields = entries.map(parseEntry).filter(Boolean);
+    if (!fields.length) throw new Error('I could not find any COBOL data-description entries. Try a copybook containing lines like “05 FIELD-NAME PIC X(10).”');
+    const roots = buildTree(fields);
+    for (const r of roots) computeLayout(r, warnings);
+    let topCursor = 1;
+    for (const r of roots) {
+      assignOffsets(r, topCursor);
+      topCursor += r.totalBytes;
+    }
+
+    for (const f of fields) {
+      if (f.dependingOn) {
+        warnings.push(`${f.name} uses variable OCCURS DEPENDING ON ${f.dependingOn}. Byte totals use the maximum occurrence count (${f.occursMax}).`);
+      }
+      if (f.redefines) warnings.push(`${f.name} overlays ${f.redefines}; its bytes are not additional storage when the redefine fits the original area.`);
+      if (/COMP|BINARY/i.test(f.usage) && !/COMP-3|PACKED-DECIMAL|COMP-1|COMP-2/i.test(f.usage)) {
+        warnings.push(`${f.name} uses ${f.usage}. Binary sizing shown uses common IBM conventions and can vary by compiler/options.`);
+      }
+      if (/\bSYNC(?:HRONIZED)?\b/i.test(f.rest)) warnings.push(`${f.name} uses SYNC/SYNCHRONIZED. Alignment padding is compiler-dependent and is not added in V1.`);
+      if (f.level === 88) warnings.push(`${f.name} is an 88-level condition name. V1 lists it but does not allocate storage for it.`);
+    }
+    return { fields, roots, warnings: [...new Set(warnings)], totalBytes: roots.reduce((s,r)=>s+r.totalBytes,0) };
+  }
+
+  function flattenElementary(roots) {
+    const out = [];
+    function visit(f, path=[], inheritedOccurs=1) {
+      const p = [...path, f.name];
+      const effectiveOccurs = inheritedOccurs * (f.occurs || 1);
+      if (f.pic) out.push({ ...f, path: p, inheritedOccurs, effectiveOccurs });
+      else f.children.forEach(c => visit(c, p, effectiveOccurs));
+    }
+    roots.forEach(r => visit(r, [], 1));
+    return out;
+  }
+
+  function safeSqlName(name) { return name.toLowerCase().replace(/-/g,'_').replace(/[^a-z0-9_]/g,''); }
+  function safeJsonName(name) {
+    const parts = name.toLowerCase().split('-');
+    return parts[0] + parts.slice(1).map(x => x.charAt(0).toUpperCase()+x.slice(1)).join('');
+  }
+
+  function sqlFor(result) {
+    const rootName = result.roots[0]?.name || 'COBOL-RECORD';
+    const rows = [];
+    for (const f of flattenElementary(result.roots)) {
+      if (f.name === 'FILLER') continue;
+      let line = `  ${safeSqlName(f.name)} ${modernType(f)}`;
+      const comments = [];
+      if (f.effectiveOccurs > 1) comments.push(`repeats ${f.effectiveOccurs}x through OCCURS — consider child table/array modeling`);
+      if (f.redefines) comments.push(`REDEFINES ${f.redefines}`);
+      if (/COMP-3|PACKED-DECIMAL/i.test(f.usage)) comments.push('from packed decimal');
+      if (comments.length) line += `  -- ${comments.join('; ')}`;
+      rows.push(line);
+    }
+    return `-- Suggested schema generated by COBOL X-Ray\n-- Review OCCURS, REDEFINES, SYNC and compiler-specific storage before production use.\n\nCREATE TABLE ${safeSqlName(rootName)} (\n${rows.join(',\n')}\n);`;
+  }
+
+  function sampleValue(f) {
+    const info = picInfo(f.pic);
+    if (info.category === 'text' || info.category === 'alphanumeric') return '';
+    if (info.scale > 0) return 0.0;
+    if (info.digits > 0) return 0;
+    return null;
+  }
+
+  function jsonFor(result) {
+    function build(f) {
+      if (f.pic) {
+        const val = sampleValue(f);
+        return f.occurs > 1 ? Array.from({length: Math.min(f.occurs,5)}, () => val) : val;
+      }
+      const obj = {};
+      for (const c of f.children) {
+        if (c.name === 'FILLER' || c.level === 88) continue;
+        obj[safeJsonName(c.name)] = build(c);
+      }
+      return f.occurs > 1 ? Array.from({length: Math.min(f.occurs,5)}, () => obj) : obj;
+    }
+    const payload = {};
+    for (const r of result.roots) payload[safeJsonName(r.name)] = build(r);
+    return JSON.stringify(payload, null, 2);
+  }
+
+  function csvHeaderFor(result) {
+    const names = [];
+    for (const f of flattenElementary(result.roots)) {
+      if (f.name === 'FILLER' || f.level === 88) continue;
+      if (f.effectiveOccurs > 1 && f.effectiveOccurs <= 20) {
+        for (let i=1;i<=f.effectiveOccurs;i++) names.push(`${f.name}_${i}`);
+      } else names.push(f.name);
+    }
+    return names.join(',');
+  }
+
+  function escapeHtml(s) {
+    return String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+  }
+
+  function render(result) {
+    lastResult = result;
+    results.classList.remove('hidden');
+    const elementary = result.fields.filter(f => f.pic && f.level !== 88);
+    el('fieldCount').textContent = elementary.length;
+    el('recordBytes').textContent = result.totalBytes;
+    el('binaryCount').textContent = elementary.filter(f => /COMP|BINARY|PACKED/i.test(f.usage)).length;
+    el('warningCount').textContent = result.warnings.length;
+
+    const wp = el('warningPanel');
+    if (result.warnings.length) {
+      wp.classList.remove('hidden');
+      wp.innerHTML = `<strong>Heads up:</strong><ul>${result.warnings.map(w=>`<li>${escapeHtml(w)}</li>`).join('')}</ul>`;
+    } else wp.classList.add('hidden');
+
+    const tbody = el('fieldTableBody');
+    const flatById = new Map(flattenElementary(result.roots).map(f => [f.id, f]));
+    tbody.innerHTML = result.fields.map(f => {
+      const indent = Math.max(0, (f.level - 1) / 5) * 12;
+      const flat = flatById.get(f.id);
+      let notes = plainEnglish(f);
+      if (flat && flat.inheritedOccurs > 1) notes += `; inside repeating group (${flat.inheritedOccurs}x)`;
+      const pos = f.pic || f.children.length ? `${f.start}-${f.end}${flat && flat.inheritedOccurs > 1 ? ' (1st occurrence)' : ''}` : '—';
+      const usageClass = /COMP-3|PACKED/i.test(f.usage) ? 'packed' : '';
+      return `<tr class="${f.pic ? '' : 'group-row'}" title="${escapeHtml(notes)}">
+        <td>${f.level.toString().padStart(2,'0')}</td>
+        <td><span class="field-name" style="margin-left:${Math.min(indent,72)}px">${escapeHtml(f.name)}</span></td>
+        <td>${f.pic ? `<span class="pill">${escapeHtml(f.pic)}</span>` : '—'}</td>
+        <td>${f.pic ? `<span class="pill ${usageClass}">${escapeHtml(f.usage)}</span>` : '—'}</td>
+        <td>${f.totalBytes || '—'}</td>
+        <td>${pos}</td>
+        <td>${f.pic ? escapeHtml(modernType(f)) : 'GROUP'}</td>
+        <td>${escapeHtml(notes)}</td>
+      </tr>`;
+    }).join('');
+
+    const mapFields = elementary.filter(f => !f.redefines && f.totalBytes > 0);
+    const total = Math.max(1, result.totalBytes);
+    el('recordRuler').innerHTML = mapFields.map(f => {
+      const pct = Math.max(3, (f.totalBytes / total) * 100);
+      return `<div class="record-segment" style="width:${pct}%" title="${escapeHtml(f.name)}: bytes ${f.start}-${f.end}">${escapeHtml(f.name)}<br>${f.totalBytes}B</div>`;
+    }).join('');
+    const flatElementary = flattenElementary(result.roots);
+    el('recordList').innerHTML = flatElementary.map(f => `<div class="record-line">
+      <strong>BYTE ${f.start}${f.end !== f.start ? `-${f.end}` : ''}${f.inheritedOccurs > 1 ? ' *' : ''}</strong>
+      <span class="field-name">${escapeHtml(f.name)}</span>
+      <span>${f.totalBytes} byte${f.totalBytes===1?'':'s'}</span>
+      <span class="muted">${escapeHtml(plainEnglish(f))}${f.inheritedOccurs > 1 ? `; first occurrence shown, repeats ${f.inheritedOccurs}x via parent OCCURS` : ''}</span>
+    </div>`).join('');
+
+    el('sqlOutput').textContent = sqlFor(result);
+    el('jsonOutput').textContent = jsonFor(result);
+    el('csvOutput').textContent = csvHeaderFor(result);
+    setTimeout(() => results.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50);
+  }
+
+
+  // Tammy Builds privacy-safe usage analytics: event metadata only; never source/document contents.
+  const TB_ANALYTICS_KEY = "phc_uzRgkY7jYhKLRh2zsGMVJaaPhSP8tsaSNsgvgqjsytXz";
+  const TB_ANALYTICS_HOST = "https://us.i.posthog.com";
+  function tbAnalyticsId() {
+    const k = "tammy_builds_analytics_id";
+    let id = localStorage.getItem(k);
+    if (!id) { id = (crypto.randomUUID ? crypto.randomUUID() : `tb-${Date.now()}-${Math.random().toString(36).slice(2)}`); localStorage.setItem(k,id); }
+    return id;
+  }
+  function tbTrack(event, tool, extra={}) {
+    const body = { api_key: TB_ANALYTICS_KEY, event, properties: { distinct_id: tbAnalyticsId(), tool, source: "web", ...extra } };
+    fetch(`${TB_ANALYTICS_HOST}/i/v0/e/`, { method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify(body), keepalive:true }).catch(()=>{});
+  }
+  
+  function decode() {
+    const text = input.value.trim();
+    if (!text) {
+      input.focus();
+      input.placeholder = 'Paste a COBOL copybook here first…';
+      return;
+    }
+    tbTrack('analysis_started','cobol_xray');
+    try {
+      const parsed = parseCopybook(text);
+      render(parsed);
+      tbTrack('analysis_completed','cobol_xray',{field_count:parsed.fields?.length || 0});
+    } catch (e) {
+      tbTrack('analysis_failed','cobol_xray');
+      alert(e.message || 'Could not decode that copybook.');
+    }
+  }
+
+  function handleFile(file) {
+    if (!file) return;
+    if (file.size > 2 * 1024 * 1024) {
+      alert('For V1, please use a text copybook smaller than 2 MB.');
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => {
+      input.value = String(reader.result || '');
+      el('fileName').textContent = `Loaded: ${file.name}`;
+      decode();
+    };
+    reader.onerror = () => alert('I could not read that file. Try opening it as text and pasting the copybook instead.');
+    reader.readAsText(file);
+  }
+
+  function csvEscape(value) {
+    const s = String(value ?? '');
+    return /[",\n]/.test(s) ? `"${s.replace(/"/g,'""')}"` : s;
+  }
+
+  function downloadFieldMap() {
+    if (!lastResult) return;
+    tbTrack('json_exported','cobol_xray',{format:'csv'});
+    const headers = ['level','field','pic','usage','bytes','start_byte','end_byte','modern_type','occurs','redefines','notes'];
+    const rows = [headers.join(',')];
+    for (const f of lastResult.fields) {
+      rows.push([
+        f.level, f.name, f.pic, f.usage, f.totalBytes, f.start ?? '', f.end ?? '', f.pic ? modernType(f) : 'GROUP', f.occurs, f.redefines || '', plainEnglish(f)
+      ].map(csvEscape).join(','));
+    }
+    const blob = new Blob([rows.join('\n')], {type:'text/csv;charset=utf-8'});
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'cobol-xray-field-map.csv';
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+  }
+
+  tbTrack('tool_opened','cobol_xray');
+
+  dropZone.addEventListener('click', () => fileInput.click());
+  dropZone.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') fileInput.click(); });
+  ['dragenter','dragover'].forEach(evt => dropZone.addEventListener(evt, e => { e.preventDefault(); dropZone.classList.add('dragover'); }));
+  ['dragleave','drop'].forEach(evt => dropZone.addEventListener(evt, e => { e.preventDefault(); dropZone.classList.remove('dragover'); }));
+  dropZone.addEventListener('drop', e => handleFile(e.dataTransfer.files[0]));
+  fileInput.addEventListener('change', e => handleFile(e.target.files[0]));
+  el('sampleBtn').addEventListener('click', () => { input.value = sample; el('fileName').textContent = 'Sample copybook loaded'; });
+  el('decodeBtn').addEventListener('click', decode);
+  el('resetBtn').addEventListener('click', () => { input.value=''; el('fileName').textContent=''; results.classList.add('hidden'); window.scrollTo({top:0, behavior:'smooth'}); });
+  el('downloadCsvBtn').addEventListener('click', downloadFieldMap);
+
+  document.querySelectorAll('.tab').forEach(btn => btn.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
+    document.querySelectorAll('.tab-panel').forEach(x => x.classList.remove('active'));
+    btn.classList.add('active');
+    el(btn.dataset.tab).classList.add('active');
+  }));
+
+  document.querySelectorAll('.copy-output').forEach(btn => btn.addEventListener('click', async () => {
+    const target = el(btn.dataset.target);
+    try {
+      await navigator.clipboard.writeText(target.textContent);
+      const old = btn.textContent;
+      btn.textContent = 'Copied ✓';
+      setTimeout(() => btn.textContent = old, 1400);
+    } catch {
+      alert('Copy is blocked by this browser. Select the text manually instead.');
+    }
+  }));
+
+  // Expose a tiny test surface for local verification.
+  window.CobolXray = { parseCopybook, picInfo, usageBytes, modernType, sqlFor, jsonFor, csvHeaderFor };
+})();
+
+</script>
+
+<style id="tbFeedbackStyles">
+.tb-learning{max-width:1100px;margin:28px auto;padding:20px;border:1px solid rgba(120,140,170,.35);border-radius:18px;background:rgba(20,35,55,.06);font-family:inherit}
+.tb-learning h3{margin:0 0 6px} .tb-learning p{margin:5px 0 12px;line-height:1.5} .tb-feedback-row{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}
+.tb-feedback-row button,.tb-learning button{padding:10px 14px;border-radius:10px;border:1px solid #6b7f9d;background:#174ea6;color:#fff;cursor:pointer;font-weight:700}
+.tb-learning label{display:block;margin-top:10px;font-weight:650} .tb-learning input,.tb-learning select,.tb-learning textarea{width:100%;margin:6px 0 10px;padding:10px;border-radius:10px;border:1px solid #8492a6;background:#fff;color:#102a43}
+.tb-learning textarea{min-height:80px} .tb-hidden{display:none!important} .tb-thanks{font-weight:700;margin-left:8px}
+</style>
+<section class="tb-learning" id="tbLearning">
+  <h3>Help improve COBOL X-Ray</h3>
+  <p>Was this useful? Your feedback is optional. Uploaded file or source contents are never included in feedback.</p>
+  <div class="tb-feedback-row">
+    <button type="button" data-helpful="yes">Yes</button>
+    <button type="button" data-helpful="no">Not really</button>
+    <button type="button" id="tbProblem">Report a problem / Suggest an improvement</button>
+  </div>
+  <form class='tb-hidden' id='tbFeedbackForm' method='POST' name='tammy-builds-feedback'>
+    <input type="hidden" name="form-name" value="tammy-builds-feedback">
+    <p class="tb-hidden" aria-hidden="true"><label>Leave this blank: <input name="bot-field" tabindex="-1" autocomplete="off"></label></p>
+    <input type="hidden" name="tool" value="cobol_xray">
+    <input type="hidden" name="helpful" id="tbHelpful" value="">
+    <input type="hidden" name="page" id="tbPage" value="">
+    <label>What best describes your feedback?
+      <select name="reason" id="tbReason">
+        <option value="">Choose one</option>
+        <option>It worked well</option><option>I wasn't sure what to do</option><option>I didn't have my own data ready</option>
+        <option>It didn't do what I expected</option><option>I found a bug</option><option>I have a feature idea</option><option>Other</option>
+      </select>
+    </label>
+    <label>Optional note — please do not paste private data<textarea name="note" maxlength="500" placeholder="What were you hoping it would do?"></textarea></label>
+    <label>Email if you want a reply<input name="email" type="email" placeholder="you@example.com"></label>
+    <button type="submit">Send feedback</button><span id="tbThanks" class="tb-thanks"></span>
+  </form>
+</section>
+<script>
+(() => {
+  const TOOL='cobol_xray';
+  const PH='phc_uzRgkY7jYhKLRh2zsGMVJaaPhSP8tsaSNsgvgqjsytXz';
+  const HOST='https://us.i.posthog.com';
+  function aid(){const k='tammy_builds_analytics_id';let v=localStorage.getItem(k);if(!v){v=(crypto.randomUUID?crypto.randomUUID():`tb-${Date.now()}-${Math.random().toString(36).slice(2)}`);localStorage.setItem(k,v)}return v}
+  function track(event,extra={}){fetch(`${HOST}/i/v0/e/`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({api_key:PH,event,properties:{distinct_id:aid(),tool:TOOL,source:'web',...extra}}),keepalive:true}).catch(()=>{})}
+  const ready=()=>{
+    const page=document.getElementById('tbPage'); if(page) page.value=location.href;
+    const sample=document.querySelector('#load-sample, #sample, #sampleBtn'); if(sample) sample.addEventListener('click',()=>track('sample_clicked'));
+    const analyze=document.querySelector('#analyze, #decodeBtn'); if(analyze) analyze.addEventListener('click',()=>track('analysis_started'));
+    document.querySelectorAll('[data-helpful]').forEach(btn=>btn.addEventListener('click',()=>{document.getElementById('tbHelpful').value=btn.dataset.helpful;document.getElementById('tbFeedbackForm').classList.remove('tb-hidden');track('feedback_prompt_answered',{helpful:btn.dataset.helpful})}));
+    const problem=document.getElementById('tbProblem'); if(problem) problem.addEventListener('click',()=>{document.getElementById('tbFeedbackForm').classList.remove('tb-hidden');document.getElementById('tbReason').value='I found a bug';track('feedback_opened',{kind:'problem_or_suggestion'})});
+    const form=document.getElementById('tbFeedbackForm'); if(form) form.addEventListener('submit',async e=>{e.preventDefault();const fd=new FormData(form);try{await fetch('/',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:new URLSearchParams(fd).toString()});track('feedback_submitted',{helpful:fd.get('helpful')||'',reason:fd.get('reason')||'',contact_opt_in:Boolean(fd.get('email'))});document.getElementById('tbThanks').textContent='Thank you — feedback sent.';form.querySelector('button[type="submit"]').disabled=true}catch(err){document.getElementById('tbThanks').textContent='Could not send right now. Please try again.'}});
+  };
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',ready); else ready();
+})();
+</script>
+
+</body>
+</html>
+<script async src="/.netlify/scripts/hud?variant=public" data-nf-variant="public" data-netlify-site-id="bd8d2938-0fc3-4aad-be28-7b552588dc1f" data-app-host="app.netlify.com"></script>
