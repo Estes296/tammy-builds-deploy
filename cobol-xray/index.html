@@ -781,6 +781,7 @@ footer > div { margin: 3px 0; }
 
 </script>
 
+
 <style id="tbFeedbackStyles">
 .tb-learning{max-width:1100px;margin:28px auto;padding:20px;border:1px solid rgba(120,140,170,.35);border-radius:18px;background:rgba(20,35,55,.06);font-family:inherit}
 .tb-learning h3{margin:0 0 6px} .tb-learning p{margin:5px 0 12px;line-height:1.5} .tb-feedback-row{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}
@@ -814,20 +815,43 @@ footer > div { margin: 3px 0; }
     <button type="submit">Send feedback</button><span id="tbThanks" class="tb-thanks"></span>
   </form>
 </section>
-<script>
+<script id="tbStandardAnalytics">
 (() => {
   const TOOL='cobol_xray';
   const PH='phc_uzRgkY7jYhKLRh2zsGMVJaaPhSP8tsaSNsgvgqjsytXz';
   const HOST='https://us.i.posthog.com';
+  const APP_VERSION='standard-1.1';
+  const params=new URLSearchParams(location.search);
+  const ref=()=>{try{return document.referrer?new URL(document.referrer).hostname.replace(/^www\./,''):'direct'}catch{return 'unknown'}};
+  const device=()=>innerWidth<=767?'mobile':innerWidth<=1024?'tablet':'desktop';
   function aid(){const k='tammy_builds_analytics_id';let v=localStorage.getItem(k);if(!v){v=(crypto.randomUUID?crypto.randomUUID():`tb-${Date.now()}-${Math.random().toString(36).slice(2)}`);localStorage.setItem(k,v)}return v}
-  function track(event,extra={}){fetch(`${HOST}/i/v0/e/`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({api_key:PH,event,properties:{distinct_id:aid(),tool:TOOL,source:'web',...extra}}),keepalive:true}).catch(()=>{})}
+  function track(event,extra={}){fetch(`${HOST}/i/v0/e/`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({api_key:PH,event,properties:{distinct_id:aid(),tool:TOOL,app_version:APP_VERSION,source:params.get('utm_source')||ref(),medium:params.get('utm_medium')||null,campaign:params.get('utm_campaign')||null,content:params.get('utm_content')||null,referrer_source:ref(),landing_path:location.pathname,device_type:device(),...extra}}),keepalive:true}).catch(()=>{})}
   const ready=()=>{
     const page=document.getElementById('tbPage'); if(page) page.value=location.href;
-    const sample=document.querySelector('#load-sample, #sample, #sampleBtn'); if(sample) sample.addEventListener('click',()=>track('sample_clicked'));
-    const analyze=document.querySelector('#analyze, #decodeBtn'); if(analyze) analyze.addEventListener('click',()=>track('analysis_started'));
+    track('tool_opened');
+
+    let inputTracked=false;
+    const markInput=(input_source)=>{if(inputTracked)return;inputTracked=true;track('input_added',{input_source})};
+    document.querySelectorAll('input[type="file"]').forEach(el=>el.addEventListener('change',()=>{if(el.files&&el.files.length)markInput('own_file')}));
+    document.querySelectorAll('textarea').forEach(el=>el.addEventListener('input',()=>{if(el.value&&el.value.trim())markInput('paste')}));
+
+    const sample=document.querySelector('#load-sample, #sample, #sampleBtn, [data-load-sample]');
+    if(sample) sample.addEventListener('click',()=>{track('sample_clicked');markInput('sample')});
+
+    let analysisStarted=false, completed=false;
+    const resultSelectors=['#results','.results','#result','.result-panel','#output','.output-panel'];
+    const visibleResult=()=>resultSelectors.some(sel=>Array.from(document.querySelectorAll(sel)).some(el=>{const cs=getComputedStyle(el);return cs.display!=='none'&&cs.visibility!=='hidden'&&!el.classList.contains('hidden')&&(el.textContent||'').trim().length>20}));
+    const markComplete=()=>{if(analysisStarted&&!completed&&visibleResult()){completed=true;track('result_shown');track('analysis_completed')}};
+    const analyze=document.querySelector('#analyze, #decodeBtn, #runBtn, #scanBtn, #compareBtn');
+    if(analyze) analyze.addEventListener('click',()=>{analysisStarted=true;completed=false;track('analysis_started');setTimeout(markComplete,0);setTimeout(markComplete,250);setTimeout(markComplete,1000)});
+    new MutationObserver(markComplete).observe(document.body,{childList:true,subtree:true,attributes:true,attributeFilter:['class','style']});
+
+    document.querySelectorAll('#download,#exportCsv,#exportTxt,[data-download]').forEach(el=>el.addEventListener('click',()=>track('report_downloaded')));
+    const print=document.querySelector('#print,[data-print]'); if(print) print.addEventListener('click',()=>track('print_clicked'));
+
     document.querySelectorAll('[data-helpful]').forEach(btn=>btn.addEventListener('click',()=>{document.getElementById('tbHelpful').value=btn.dataset.helpful;document.getElementById('tbFeedbackForm').classList.remove('tb-hidden');track('feedback_prompt_answered',{helpful:btn.dataset.helpful})}));
     const problem=document.getElementById('tbProblem'); if(problem) problem.addEventListener('click',()=>{document.getElementById('tbFeedbackForm').classList.remove('tb-hidden');document.getElementById('tbReason').value='I found a bug';track('feedback_opened',{kind:'problem_or_suggestion'})});
-    const form=document.getElementById('tbFeedbackForm'); if(form) form.addEventListener('submit',async e=>{e.preventDefault();const fd=new FormData(form);try{await fetch('/',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:new URLSearchParams(fd).toString()});track('feedback_submitted',{helpful:fd.get('helpful')||'',reason:fd.get('reason')||'',contact_opt_in:Boolean(fd.get('email'))});document.getElementById('tbThanks').textContent='Thank you — feedback sent.';form.querySelector('button[type="submit"]').disabled=true}catch(err){document.getElementById('tbThanks').textContent='Could not send right now. Please try again.'}});
+    const form=document.getElementById('tbFeedbackForm'); if(form) form.addEventListener('submit',async e=>{e.preventDefault();const fd=new FormData(form);try{const response=await fetch('/',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:new URLSearchParams(fd).toString()});if(!response.ok)throw new Error('submit failed');track('feedback_submitted',{helpful:fd.get('helpful')||'',reason:fd.get('reason')||'',contact_opt_in:Boolean(fd.get('email'))});document.getElementById('tbThanks').textContent='Thank you — feedback sent.';form.querySelector('button[type="submit"]').disabled=true}catch(err){track('feedback_submit_failed');document.getElementById('tbThanks').textContent='Could not send right now. Please try again.'}});
   };
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',ready); else ready();
 })();
